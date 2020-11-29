@@ -31,7 +31,7 @@ class Cell {
 		} else if (this.playerNo == 2) {
 			result = 'blue';
 		} else {
-			result = 'gray';
+			result = 'white';
 		}
 		
 		return result;
@@ -54,6 +54,7 @@ class Board {
 	}
 
 	drawGrid() {
+		ctx.clearRect(0, 0, columns * cellSize, rows * cellSize);
 		ctx.strokeStyle = '#aaa';
 
 		for (let x = 0.5; x <= cellSize * columns + 0.5; x += cellSize) {
@@ -73,20 +74,32 @@ class Board {
 
 	drawCells() {
 		this.cells.forEach((cell) => {
-			ctx.beginPath();
-			ctx.rect(cell.x * cellSize + 1, cell.y * cellSize + 1, cellSize - 1, cellSize - 1);
-			ctx.fillStyle = cell.color;
-			ctx.fill();
+			this.drawCell(cell);
 		});
 	}
 
-	addCell(cell) {
-		this._cells = this.cells.concat(cell);
-		this.drawCells();
+	drawCell(cell) {
+		ctx.beginPath();
+		ctx.rect(cell.x * cellSize + 1, cell.y * cellSize + 1, cellSize - 1, cellSize - 1);
+		ctx.fillStyle = cell.color;
+		ctx.fill();
 	}
 
-	findCell(x, y) {
-		this.cells.find(cell => cell.x == x && cell.y == y);
+	findCellIndex(x, y) {
+		return this.cells.findIndex(cell => cell.x == x && cell.y == y);
+	}
+
+	toggleCell(x, y) {
+		var cellIndex = this.findCellIndex(x, y);
+
+		if (cellIndex > -1) {
+			this._cells.splice(cellIndex, 1);
+			this.drawCell(new Cell(x, y));
+		} else {
+			let newCell = new Cell(x, y, 1);
+			this._cells = this.cells.concat(newCell);
+			this.drawCell(newCell);
+		}
 	}
 }
 
@@ -104,7 +117,5 @@ canvas.addEventListener('click', function(e) {
 	const column = Math.floor(x / cellSize);
 	const row = Math.floor(y / cellSize);
 
-	if (!board.findCell(column, row)) {
-		board.addCell(new Cell(column, row))
-	}
+	board.toggleCell(column, row);
 })
