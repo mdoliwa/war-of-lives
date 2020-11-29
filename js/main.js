@@ -38,28 +38,60 @@ class Cell {
 	}
 }
 
-var board = initBoard(playerOneCells, playerTwoCells);
+class Board {
+	constructor(playerOneCells, playerTwoCells) {
+		this._cells = playerOneCells.map((cell) => new Cell(cell[0], cell[1], 1)).concat(
+			playerTwoCells.map((cell) => new Cell(cell[0] + rows, cell[1], 2)));
+		}
+
+	get cells() {
+		return this._cells;
+	}
+
+	draw() {
+		this.drawGrid();
+		this.drawCells();
+	}
+
+	drawGrid() {
+		ctx.strokeStyle = '#aaa';
+
+		for (let x = 0.5; x <= cellSize * columns + 0.5; x += cellSize) {
+			ctx.beginPath();
+			ctx.moveTo(x, 0);
+			ctx.lineTo(x, rows * cellSize + 1);
+			ctx.stroke();
+		}
+
+		for (let y = 0.5; y <= cellSize * rows + 0.5; y += cellSize) {
+			ctx.beginPath();
+			ctx.moveTo(0, y);
+			ctx.lineTo(columns * cellSize + 1, y);
+			ctx.stroke();
+		}
+	}
+
+	drawCells() {
+		this.cells.forEach((cell) => {
+			ctx.beginPath();
+			ctx.rect(cell.x * cellSize + 1, cell.y * cellSize + 1, cellSize - 1, cellSize - 1);
+			ctx.fillStyle = cell.color;
+			ctx.fill();
+		});
+	}
+
+	addCell(cell) {
+		this._cells = this.cells.concat(cell);
+		this.drawCells();
+	}
+}
+
+var board = new Board(playerOneCells, playerTwoCells);
 
 canvas.width = cellSize * columns + 1;
 canvas.height = cellSize * rows + 1; 
 
-ctx.strokeStyle = '#aaa';
-
-for (let x = 0.5; x <= cellSize * columns + 0.5; x += cellSize) {
-	ctx.beginPath();
-	ctx.moveTo(x, 0);
-	ctx.lineTo(x, rows * cellSize + 1);
-	ctx.stroke();
-}
-
-for (let y = 0.5; y <= cellSize * rows + 0.5; y += cellSize) {
-	ctx.beginPath();
-	ctx.moveTo(0, y);
-	ctx.lineTo(columns * cellSize + 1, y);
-	ctx.stroke();
-}
-
-board.forEach((cell) => setCell(cell));
+board.draw();
 
 canvas.addEventListener('click', function(e) {
 	const rect = canvas.getBoundingClientRect();
@@ -70,18 +102,5 @@ canvas.addEventListener('click', function(e) {
 
 	if (row >= rows || column >= columns) { return }
 
-	setCell(new Cell(column, row))
+	board.addCell(new Cell(column, row))
 })
-
-function setCell(cell) {
-	ctx.beginPath();
-	ctx.rect(cell.x * cellSize + 1, cell.y * cellSize + 1, cellSize - 1, cellSize - 1);
-	ctx.fillStyle = cell.color;
-	ctx.fill();
-}
-
-function initBoard(playerOneCells, playerTwoCells) {
-	return playerOneCells.map((cell) => new Cell(cell[0], cell[1], 1)).concat(
-		playerTwoCells.map((cell) => new Cell(cell[0] + rows, cell[1], 2))
-	);
-}
