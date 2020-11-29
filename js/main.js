@@ -31,7 +31,11 @@ canvas.addEventListener('click', function(e) {
 	const column = Math.floor(x / cellSize);
 	const row = Math.floor(y / cellSize);
 
-	ctx.beginPath();
-	ctx.rect(column * cellSize + 1, row * cellSize + 1, cellSize - 1, cellSize - 1);
-	ctx.fill();
+	setCell(column, row)
 })
+
+function setCell(x, y) {
+	ctx.beginPath();
+	ctx.rect(x * cellSize + 1, y * cellSize + 1, cellSize - 1, cellSize - 1);
+	ctx.fill();
+}
