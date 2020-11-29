@@ -24,4 +24,14 @@ for (let y = 0.5; y <= cellSize * rows + 0.5; y += cellSize) {
 	ctx.stroke();
 }
 
+canvas.addEventListener('click', function(e) {
+	const rect = canvas.getBoundingClientRect();
+	const x = e.clientX - rect.left, y = e.clientY - rect.top;
 
+	const column = Math.floor(x / cellSize);
+	const row = Math.floor(y / cellSize);
+
+	ctx.beginPath();
+	ctx.rect(column * cellSize + 1, row * cellSize + 1, cellSize - 1, cellSize - 1);
+	ctx.fill();
+})
