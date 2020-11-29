@@ -84,6 +84,10 @@ class Board {
 		this._cells = this.cells.concat(cell);
 		this.drawCells();
 	}
+
+	findCell(x, y) {
+		this.cells.find(cell => cell.x == x && cell.y == y);
+	}
 }
 
 var board = new Board(playerOneCells, playerTwoCells);
@@ -100,7 +104,7 @@ canvas.addEventListener('click', function(e) {
 	const column = Math.floor(x / cellSize);
 	const row = Math.floor(y / cellSize);
 
-	if (row >= rows || column >= columns) { return }
-
-	board.addCell(new Cell(column, row))
+	if (!board.findCell(column, row)) {
+		board.addCell(new Cell(column, row))
+	}
 })
