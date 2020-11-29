@@ -103,12 +103,26 @@ class Board {
 	}
 }
 
-var board = new Board(playerOneCells, playerTwoCells);
+class Game {
+	constructor(playerOneCells, playerTwoCells) {
+		this._board = new Board(playerOneCells, playerTwoCells);
+	}
+
+	get board() {
+		return this._board;
+	}
+
+	init() {
+		this.board.draw();
+	}
+}
 
 canvas.width = cellSize * columns + 1;
 canvas.height = cellSize * rows + 1; 
 
-board.draw();
+var game = new Game(playerOneCells, playerTwoCells)
+
+game.init();
 
 canvas.addEventListener('click', function(e) {
 	const rect = canvas.getBoundingClientRect();
