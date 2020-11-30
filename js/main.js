@@ -115,6 +115,27 @@ class Game {
 	init() {
 		this.board.draw();
 	}
+
+	tick() {
+		var neighbors = [];
+
+		for (let x = 0; x < columns; x++) {
+			neighbors[x] = Array(rows).fill([])
+		}
+
+		this.board.cells.forEach(cell => {
+			neighbors[(cell.x - 1).mod(columns)][(cell.y - 1).mod(rows)] = neighbors[(cell.x - 1).mod(columns)][(cell.y - 1).mod(rows)].concat(cell);
+			neighbors[(cell.x - 1).mod(columns)][cell.y] = neighbors[(cell.x - 1).mod(columns)][cell.y].concat(cell);
+			neighbors[(cell.x - 1).mod(columns)][(cell.y + 1).mod(rows)] = neighbors[(cell.x - 1).mod(columns)][(cell.y + 1).mod(rows)].concat(cell);
+			neighbors[cell.x][(cell.y - 1).mod(rows)] = neighbors[cell.x][(cell.y - 1).mod(rows)].concat(cell);
+			neighbors[cell.x][(cell.y + 1).mod(rows)] = neighbors[cell.x][(cell.y + 1).mod(rows)].concat(cell);
+			neighbors[(cell.x + 1).mod(columns)][(cell.y - 1).mod(rows)] = neighbors[(cell.x + 1).mod(columns)][(cell.y - 1).mod(rows)].concat(cell);
+			neighbors[(cell.x + 1).mod(columns)][cell.y] = neighbors[(cell.x + 1).mod(columns)][cell.y].concat(cell);
+			neighbors[(cell.x + 1).mod(columns)][(cell.y + 1).mod(rows)] = neighbors[(cell.x + 1).mod(columns)][(cell.y + 1).mod(rows)].concat(cell);
+		});
+
+		return neighbors;
+	}
 }
 
 canvas.width = cellSize * columns + 1;
@@ -123,6 +144,8 @@ canvas.height = cellSize * rows + 1;
 var game = new Game(playerOneCells, playerTwoCells)
 
 game.init();
+
+//Event listeners
 
 canvas.addEventListener('click', function(e) {
 	const rect = canvas.getBoundingClientRect();
@@ -133,3 +156,9 @@ canvas.addEventListener('click', function(e) {
 
 	game.board.toggleCell(column, row);
 })
+
+//Utils
+
+Number.prototype.mod = function(n) {
+	return ((this % n) + n) % n;
+}
