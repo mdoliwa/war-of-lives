@@ -131,5 +131,5 @@ canvas.addEventListener('click', function(e) {
 	const column = Math.floor(x / cellSize);
 	const row = Math.floor(y / cellSize);
 
-	board.toggleCell(column, row);
+	game.board.toggleCell(column, row);
 })
