@@ -35,7 +35,7 @@ class Cell {
 		} else if (this.playerNo == 2) {
 			result = 'blue';
 		} else {
-			result = 'gray';
+			result = 'lightgray';
 		}
 		
 		return result;
@@ -131,9 +131,12 @@ class Game {
 
 	loop() {
 		var that = this;
-		setInterval(function(){
+		var intervalId = setInterval(function(){
 			that.tick();
 			that.board.draw();
+			if (that.isOver()) {
+				clearInterval(intervalId);
+			}
 		}, 100);
 	}
 
@@ -185,6 +188,10 @@ class Game {
 		});
 		
 		this._board = newBoard;
+	}
+
+	isOver() {
+		return !(this.board.cells.find(cell => cell.playerNo == 1) && this.board.cells.find(cell => cell.playerNo == 2))
 	}
 }
 
