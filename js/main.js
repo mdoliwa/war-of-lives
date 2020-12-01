@@ -5,8 +5,8 @@ const cellSize = 32;
 const rows = 16;
 const columns = rows * 2;
 
-const playerOneCells = [[0,2], [1,0], [1,2], [2,1], [2,2]];
-const playerTwoCells = [[1,2], [1,1], [2,1], [2,2], [3,3]];
+const playerOneCells = [[0,2], [1,0], [1,2], [2,1], [2,2], [10,2], [11,0], [11,2], [12,1], [12,2], [12,4]];
+const playerTwoCells = [[1,2], [1,1], [2,1], [2,2], [3,3],[10,2], [11,0], [11,2], [12,1], [12,2], [11,4]];
 
 class Cell {
 	constructor(x, y, playerNo) {
@@ -197,6 +197,7 @@ canvas.height = cellSize * rows + 1;
 var game = new Game(playerOneCells, playerTwoCells)
 
 game.init();
+game.loop();
 
 //Event listeners
 
