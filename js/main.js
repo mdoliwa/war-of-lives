@@ -5,8 +5,8 @@ const cellSize = 32;
 const rows = 16;
 const columns = rows * 2;
 
-const playerOneCells = [[2,2], [3,3], [4,3], [4,6], [6,7], [5,6], [5,5]];
-const playerTwoCells = [[2,2], [2,3], [2,4], [3,4], [4,5]];
+const playerOneCells = [[2,2], [3,3], [4,2], [4,4], [6,7], [5,6], [5,5]];
+const playerTwoCells = [[2,2], [2,3], [2,4]];
 
 class Cell {
 	constructor(x, y, playerNo) {
@@ -141,8 +141,8 @@ class Game {
 			that.tick();
 			that.board.draw();
 			if (that.isOver() || that.cycleDetected()) {
+				console.log(that.winner());
 				clearInterval(intervalId);
-				console.log("GAME OVER");
 			}
 			that._history = that._history.concat(JSON.stringify(that.board));
 		}, 100);
@@ -204,6 +204,21 @@ class Game {
 
 	cycleDetected() {
 		return this.history.includes(JSON.stringify(this.board));
+	}
+
+	winner() {
+		let playerOneHasCells = this.board.cells.find(cell => cell.playerNo == 1);
+		let playerTwoHasCells = this.board.cells.find(cell => cell.playerNo == 2);
+
+		if (playerOneHasCells && playerTwoHasCells) {
+			return 'GAME OVER - DRAW';
+		} else if (playerOneHasCells) {
+			return 'GAME OVER - PLAYER ONE WINS';
+		} else if (playerTwoHasCells) {
+			return 'GAME OVER - PLAYER TWO WINS';
+		} else {
+			return 'GAME IS STILL ON';
+		}
 	}
 }
 
