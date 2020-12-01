@@ -125,6 +125,14 @@ class Game {
 		this.board.draw();
 	}
 
+	loop() {
+		var that = this;
+		setInterval(function(){
+			that.tick();
+			that.board.draw();
+		}, 250);
+	}
+
 	tick() {
 		var neighbors = {};
 
@@ -166,7 +174,6 @@ class Game {
 		});
 		
 		this._board = newBoard;
-		this.board.draw();
 	}
 }
 
