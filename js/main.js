@@ -179,10 +179,7 @@ class Game {
 					playerNo = 1;
 				} else if (cells.filter(cell => cell.playerNo == 2).length > 2) {
 					playerNo = 2;
-				} else {
-					playerNo = undefined;
-				}
-
+				} 
 				newBoard.addCell(new Cell(parseInt(x), parseInt(y), playerNo));
 			}
 		});
