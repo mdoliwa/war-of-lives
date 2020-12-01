@@ -5,8 +5,8 @@ const cellSize = 32;
 const rows = 16;
 const columns = rows * 2;
 
-const playerOneCells = [[0,2], [1,0], [1,2], [2,1], [2,2], [10,2], [11,0], [11,2], [12,1], [12,2], [12,4]];
-const playerTwoCells = [[1,2], [1,1], [2,1], [2,2], [3,3],[10,2], [11,0], [11,2], [12,1], [12,2], [11,4]];
+const playerOneCells = [[2,2], [3,3], [4,3], [4,6], [6,7], [5,6], [5,5]];
+const playerTwoCells = [[2,2], [2,3], [2,4], [3,4], [4,5]];
 
 class Cell {
 	constructor(x, y, playerNo) {
@@ -44,9 +44,10 @@ class Cell {
 
 class Board {
 	constructor(playerOneCells, playerTwoCells) {
-		this._cells = playerOneCells.map((cell) => new Cell(cell[0], cell[1], 1)).concat(
-			playerTwoCells.map((cell) => new Cell(cell[0] + rows, cell[1], 2)));
-		}
+		this._cells = [];
+		playerOneCells.forEach(cell => this.addCell(new Cell(cell[0], cell[1], 1)));
+		playerTwoCells.forEach(cell => this.addCell(new Cell(cell[0] + rows, cell[1], 2)));
+	}
 
 	get cells() {
 		return this._cells;
@@ -108,7 +109,7 @@ class Board {
 	}
 
 	addCell(cell) {
-		this._cells = this.cells.concat(cell);
+		this._cells = this.cells.concat(cell).sort();
 	}
 
 	deleteCell(x, y) {
@@ -119,10 +120,15 @@ class Board {
 class Game {
 	constructor(playerOneCells, playerTwoCells) {
 		this._board = new Board(playerOneCells, playerTwoCells);
+		this._history = [JSON.stringify(this.board)]
 	}
 
 	get board() {
 		return this._board;
+	}
+
+	get history() {
+		return this._history;
 	}
 
 	init() {
@@ -134,9 +140,11 @@ class Game {
 		var intervalId = setInterval(function(){
 			that.tick();
 			that.board.draw();
-			if (that.isOver()) {
+			if (that.isOver() || that.cycleDetected()) {
 				clearInterval(intervalId);
+				console.log("GAME OVER");
 			}
+			that._history = that._history.concat(JSON.stringify(that.board));
 		}, 100);
 	}
 
@@ -192,6 +200,10 @@ class Game {
 
 	isOver() {
 		return !(this.board.cells.find(cell => cell.playerNo == 1) && this.board.cells.find(cell => cell.playerNo == 2))
+	}
+
+	cycleDetected() {
+		return this.history.includes(JSON.stringify(this.board));
 	}
 }
 
