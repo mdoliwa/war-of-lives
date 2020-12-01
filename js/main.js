@@ -5,14 +5,14 @@ const cellSize = 32;
 const rows = 16;
 const columns = rows * 2;
 
-const playerOneCells = [[0,0], [0,1], [0,2]];
-const playerTwoCells = [[1,1], [2,2], [3,3]];
+const playerOneCells = [[0,2], [1,0], [1,2], [2,1], [2,2]];
+const playerTwoCells = [[1,2], [1,1], [2,1], [2,2], [3,3]];
 
 class Cell {
 	constructor(x, y, playerNo) {
 		this._x = x;
 		this._y = y;
-		this.playerNo = playerNo;
+		this._playerNo = playerNo;
 	}
 
 	get x() {
@@ -21,6 +21,10 @@ class Cell {
 
 	get y() {
 		return this._y;
+	}
+
+	get playerNo() {
+		return this._playerNo;
 	}
 
 	get color() {
@@ -130,7 +134,7 @@ class Game {
 		setInterval(function(){
 			that.tick();
 			that.board.draw();
-		}, 250);
+		}, 100);
 	}
 
 	tick() {
@@ -169,7 +173,17 @@ class Game {
 		Object.entries(neighbors).forEach(([coordinates, cells]) => {
 			if (cells.length == 3) {
 				let x = coordinates.split(',')[0], y = coordinates.split(',')[1];
-				newBoard.addCell(new Cell(parseInt(x), parseInt(y)));
+				let playerNo;
+
+				if (cells.filter(cell => cell.playerNo == 1).length > 1) {
+					playerNo = 1;
+				} else if (cells.filter(cell => cell.playerNo == 2).length > 2) {
+					playerNo = 2;
+				} else {
+					playerNo = undefined;
+				}
+
+				newBoard.addCell(new Cell(parseInt(x), parseInt(y), playerNo));
 			}
 		});
 		
