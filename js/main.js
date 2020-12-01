@@ -31,7 +31,7 @@ class Cell {
 		} else if (this.playerNo == 2) {
 			result = 'blue';
 		} else {
-			result = 'white';
+			result = 'gray';
 		}
 		
 		return result;
@@ -94,12 +94,21 @@ class Board {
 
 		if (cellIndex > -1) {
 			this._cells.splice(cellIndex, 1);
-			this.drawCell(new Cell(x, y));
+			this.deleteCell(x, y);
 		} else {
 			let newCell = new Cell(x, y, 1);
-			this._cells = this.cells.concat(newCell);
-			this.drawCell(newCell);
+			this.addCell(newCell);
 		}
+
+		this.draw();
+	}
+
+	addCell(cell) {
+		this._cells = this.cells.concat(cell);
+	}
+
+	deleteCell(x, y) {
+		delete this.cells[this.findCellIndex(x, y)];
 	}
 }
 
@@ -117,24 +126,47 @@ class Game {
 	}
 
 	tick() {
-		var neighbors = [];
-
-		for (let x = 0; x < columns; x++) {
-			neighbors[x] = Array(rows).fill([])
-		}
+		var neighbors = {};
 
 		this.board.cells.forEach(cell => {
-			neighbors[(cell.x - 1).mod(columns)][(cell.y - 1).mod(rows)] = neighbors[(cell.x - 1).mod(columns)][(cell.y - 1).mod(rows)].concat(cell);
-			neighbors[(cell.x - 1).mod(columns)][cell.y] = neighbors[(cell.x - 1).mod(columns)][cell.y].concat(cell);
-			neighbors[(cell.x - 1).mod(columns)][(cell.y + 1).mod(rows)] = neighbors[(cell.x - 1).mod(columns)][(cell.y + 1).mod(rows)].concat(cell);
-			neighbors[cell.x][(cell.y - 1).mod(rows)] = neighbors[cell.x][(cell.y - 1).mod(rows)].concat(cell);
-			neighbors[cell.x][(cell.y + 1).mod(rows)] = neighbors[cell.x][(cell.y + 1).mod(rows)].concat(cell);
-			neighbors[(cell.x + 1).mod(columns)][(cell.y - 1).mod(rows)] = neighbors[(cell.x + 1).mod(columns)][(cell.y - 1).mod(rows)].concat(cell);
-			neighbors[(cell.x + 1).mod(columns)][cell.y] = neighbors[(cell.x + 1).mod(columns)][cell.y].concat(cell);
-			neighbors[(cell.x + 1).mod(columns)][(cell.y + 1).mod(rows)] = neighbors[(cell.x + 1).mod(columns)][(cell.y + 1).mod(rows)].concat(cell);
+			let keys = [
+				[(cell.x - 1).mod(columns), (cell.y - 1).mod(rows)],
+				[(cell.x - 1).mod(columns), (cell.y).mod(rows)],
+				[(cell.x - 1).mod(columns), (cell.y + 1).mod(rows)],
+				[(cell.x + 1).mod(columns), (cell.y - 1).mod(rows)],
+				[(cell.x + 1).mod(columns), (cell.y).mod(rows)],
+				[(cell.x + 1).mod(columns), (cell.y + 1).mod(rows)],
+				[(cell.x).mod(columns), (cell.y - 1).mod(rows)],
+				[(cell.x).mod(columns), (cell.y + 1).mod(rows)]
+			]
+
+			keys.forEach(key => {
+				if (neighbors[key]) {
+					neighbors[key] = neighbors[key].concat(cell);
+				} else {
+					neighbors[key] = [cell];
+				}
+			});
 		});
 
-		return neighbors;
+		let newBoard = new Board([], []);
+
+		this.board.cells.forEach(cell => {
+			if (neighbors[[cell.x, cell.y]] && (neighbors[[cell.x, cell.y]].length == 2 || neighbors[[cell.x, cell.y]].length == 3)) {
+				newBoard.addCell(cell);
+			}
+			delete neighbors[[cell.x, cell.y]];
+		});
+
+		Object.entries(neighbors).forEach(([coordinates, cells]) => {
+			if (cells.length == 3) {
+				let x = coordinates.split(',')[0], y = coordinates.split(',')[1];
+				newBoard.addCell(new Cell(parseInt(x), parseInt(y)));
+			}
+		});
+		
+		this._board = newBoard;
+		this.board.draw();
 	}
 }
 
