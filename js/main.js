@@ -121,6 +121,8 @@ class Game {
 	constructor(playerOneCells, playerTwoCells) {
 		this._board = new Board(playerOneCells, playerTwoCells);
 		this._history = [JSON.stringify(this.board)]
+		this.state = 'initialized';
+		this.observers = [];
 	}
 
 	get board() {
@@ -133,15 +135,31 @@ class Game {
 
 	init() {
 		this.board.draw();
+		this.notify();
+	}
+
+	subscribe(observer) {
+		this.observers.push(observer);
+	}
+	
+	updateState(newState) {
+		this.state = newState;
+		this.notify();
+	}
+
+	notify() {
+		this.observers.forEach(observer => observer.update(this.state));
 	}
 
 	loop() {
 		var that = this;
+		this.updateState('in progress');
+
 		var intervalId = setInterval(function(){
 			that.tick();
 			that.board.draw();
 			if (that.isOver() || that.cycleDetected()) {
-				console.log(that.winner());
+				that.updateState(that.winner());
 				clearInterval(intervalId);
 			}
 			that._history = that._history.concat(JSON.stringify(that.board));
@@ -211,13 +229,32 @@ class Game {
 		let playerTwoHasCells = this.board.cells.find(cell => cell.playerNo == 2);
 
 		if (playerOneHasCells && playerTwoHasCells) {
-			return 'GAME OVER - DRAW';
+			return 'draw';
 		} else if (playerOneHasCells) {
-			return 'GAME OVER - PLAYER ONE WINS';
+			return 'player one';
 		} else if (playerTwoHasCells) {
-			return 'GAME OVER - PLAYER TWO WINS';
-		} else {
-			return 'GAME IS STILL ON';
+			return 'player two';
+		} 	
+	}
+}
+
+class Menu {
+	constructor() {
+		this.playButton = document.getElementById('play');
+	}
+
+	update(gameState) {
+		switch(gameState) {
+			case 'initialized': 
+				this.playButton.disabled = false;
+				this.playButton.innerText = 'PLAY';
+				break;
+			case 'in progress':
+				this.playButton.disabled = true;
+				break;
+			default:
+				this.playButton.disabled = false;
+				this.playButton.innerText = 'RESET';
 		}
 	}
 }
@@ -227,8 +264,9 @@ canvas.height = cellSize * rows + 1;
 
 var game = new Game(playerOneCells, playerTwoCells)
 
+game.subscribe(new Menu());
+
 game.init();
-game.loop();
 
 //Event listeners
 
@@ -240,6 +278,10 @@ canvas.addEventListener('click', function(e) {
 	const row = Math.floor(y / cellSize);
 
 	game.board.toggleCell(column, row);
+})
+
+document.getElementById('play').addEventListener('click', function(e) {
+	game.loop();
 })
 
 //Utils
