@@ -48,6 +48,20 @@ class Board {
 		return this.cells.filter(cell => cell.playerNo == 2).map(cell => [cell.x - rows, cell.y]) ;
 	}
 
+	 set playerOneCells(cells) {
+		 this.cells = this.cells.filter(cell => cell.playerNo != 1);
+		 cells.forEach(cell => this.cells = this.cells.concat(new Cell(cell[0], cell[1], 1)));
+
+		 this.cells = this.cells.sort();
+	 }
+
+	set playerTwoCells(cells) {
+		 this.cells = this.cells.filter(cell => cell.playerNo != 2);
+		 cells.forEach(cell => this.cells = this.cells.concat(new Cell(cell[0] + rows, cell[1], 2)));
+
+		 this.cells = this.cells.sort();
+	}
+
 	drawGrid() {
 		ctx.clearRect(0, 0, columns * cellSize + 1, rows * cellSize + 1);
 		ctx.strokeStyle = '#aaa';
@@ -114,12 +128,9 @@ class Game {
 		this.playerOneCells = playerOneCells;
 		this.playerTwoCells = playerTwoCells;
 
-		let cells = [];
-
-		playerOneCells.forEach(cell => cells = cells.concat(new Cell(cell[0], cell[1], 1)));
-		playerTwoCells.forEach(cell => cells = cells.concat(new Cell(cell[0] + rows, cell[1], 2)));
-
-		this.board = new Board(cells);
+		this.board = new Board([]);
+		this.board.playerOneCells = playerOneCells;
+		this.board.playerTwoCells = playerTwoCells;
 	}
 
 	init() {
