@@ -10,21 +10,9 @@ const playerTwoCells = [[2,2], [2,3], [2,4]];
 
 class Cell {
 	constructor(x, y, playerNo) {
-		this._x = x;
-		this._y = y;
-		this._playerNo = playerNo;
-	}
-
-	get x() {
-		return this._x;
-	}
-
-	get y() {
-		return this._y;
-	}
-
-	get playerNo() {
-		return this._playerNo;
+		this.x = x;
+		this.y = y;
+		this.playerNo = playerNo;
 	}
 
 	get color() {
@@ -43,14 +31,8 @@ class Cell {
 }
 
 class Board {
-	constructor(playerOneCells, playerTwoCells) {
-		this._cells = [];
-		playerOneCells.forEach(cell => this.addCell(new Cell(cell[0], cell[1], 1)));
-		playerTwoCells.forEach(cell => this.addCell(new Cell(cell[0] + rows, cell[1], 2)));
-	}
-
-	get cells() {
-		return this._cells;
+	constructor(cells) {
+		this.cells = cells;
 	}
 
 	draw() {
@@ -58,18 +40,26 @@ class Board {
 		this.drawCells();
 	}
 
+	get playerOneCells() {
+		return this.cells.filter(cell => cell.playerNo == 1).map(cell => [cell.x, cell.y]);
+	}
+
+	get playerTwoCells() {
+		return this.cells.filter(cell => cell.playerNo == 2).map(cell => [cell.x - rows, cell.y]) ;
+	}
+
 	drawGrid() {
-		ctx.clearRect(0, 0, columns * cellSize, rows * cellSize);
+		ctx.clearRect(0, 0, columns * cellSize + 1, rows * cellSize + 1);
 		ctx.strokeStyle = '#aaa';
 
-		for (let x = 0.5; x <= cellSize * columns + 0.5; x += cellSize) {
+		for (let x = 0.5; x <= columns * cellSize + 0.5; x += cellSize) {
 			ctx.beginPath();
 			ctx.moveTo(x, 0);
 			ctx.lineTo(x, rows * cellSize + 1);
 			ctx.stroke();
 		}
 
-		for (let y = 0.5; y <= cellSize * rows + 0.5; y += cellSize) {
+		for (let y = 0.5; y <= rows * cellSize+ 0.5; y += cellSize) {
 			ctx.beginPath();
 			ctx.moveTo(0, y);
 			ctx.lineTo(columns * cellSize + 1, y);
@@ -77,11 +67,7 @@ class Board {
 		}
 	}
 
-	drawCells() {
-		this.cells.forEach((cell) => {
-			this.drawCell(cell);
-		});
-	}
+	drawCells() { this.cells.forEach((cell) => { this.drawCell(cell) }); }
 
 	drawCell(cell) {
 		ctx.beginPath();
@@ -90,47 +76,50 @@ class Board {
 		ctx.fill();
 	}
 
-	findCellIndex(x, y) {
-		return this.cells.findIndex(cell => cell.x == x && cell.y == y);
-	}
-
 	toggleCell(x, y) {
 		var cellIndex = this.findCellIndex(x, y);
 
 		if (cellIndex > -1) {
-			this._cells.splice(cellIndex, 1);
 			this.deleteCell(x, y);
 		} else {
-			let newCell = new Cell(x, y, 1);
-			this.addCell(newCell);
+			this.addCell(new Cell(x, y, 1));
 		}
 
 		this.draw();
 	}
 
+	findCellIndex(x, y) {
+		return this.cells.findIndex(cell => cell.x == x && cell.y == y);
+	}
+
+
 	addCell(cell) {
-		this._cells = this.cells.concat(cell).sort();
+		this.cells = this.cells.concat(cell).sort();
 	}
 
 	deleteCell(x, y) {
-		delete this.cells[this.findCellIndex(x, y)];
+		this.cells.splice(this.findCellIndex(x, y), 1);
 	}
 }
 
 class Game {
 	constructor(playerOneCells, playerTwoCells) {
-		this._board = new Board(playerOneCells, playerTwoCells);
-		this._history = [JSON.stringify(this.board)]
+		this.initBoard(playerOneCells, playerTwoCells);
+		this.history = [JSON.stringify(this.board)]
 		this.state = 'initialized';
 		this.observers = [];
 	}
 
-	get board() {
-		return this._board;
-	}
+	initBoard(playerOneCells, playerTwoCells) {
+		this.playerOneCells = playerOneCells;
+		this.playerTwoCells = playerTwoCells;
 
-	get history() {
-		return this._history;
+		let cells = [];
+
+		playerOneCells.forEach(cell => cells = cells.concat(new Cell(cell[0], cell[1], 1)));
+		playerTwoCells.forEach(cell => cells = cells.concat(new Cell(cell[0] + rows, cell[1], 2)));
+
+		this.board = new Board(cells);
 	}
 
 	init() {
@@ -159,11 +148,18 @@ class Game {
 			that.tick();
 			that.board.draw();
 			if (that.isOver() || that.cycleDetected()) {
-				that.updateState(that.winner());
+				that.updateState('game over');
 				clearInterval(intervalId);
 			}
-			that._history = that._history.concat(JSON.stringify(that.board));
+			that.history = that.history.concat(JSON.stringify(that.board));
 		}, 100);
+	}
+
+	restart() {
+		this.initBoard(this.playerOneCells, this.playerTwoCells);
+		this.history = [JSON.stringify(this.board)];
+		this.updateState('initialized');
+		this.init();
 	}
 
 	tick() {
@@ -213,7 +209,7 @@ class Game {
 			}
 		});
 		
-		this._board = newBoard;
+		this.board = newBoard;
 	}
 
 	isOver() {
@@ -240,21 +236,24 @@ class Game {
 
 class Menu {
 	constructor() {
-		this.playButton = document.getElementById('play');
+		this.playButton = document.getElementById('start');
+		this.restartButton = document.getElementById('restart');
 	}
 
 	update(gameState) {
 		switch(gameState) {
 			case 'initialized': 
+				this.playButton.style.display = 'inline-block';
 				this.playButton.disabled = false;
-				this.playButton.innerText = 'PLAY';
+				this.restartButton.style.display = 'none';
 				break;
 			case 'in progress':
 				this.playButton.disabled = true;
 				break;
-			default:
-				this.playButton.disabled = false;
-				this.playButton.innerText = 'RESET';
+			case 'game over':
+				this.playButton.style.display = 'none';
+				this.restartButton.style.display = 'inline-block';
+				break;
 		}
 	}
 }
@@ -278,10 +277,15 @@ canvas.addEventListener('click', function(e) {
 	const row = Math.floor(y / cellSize);
 
 	game.board.toggleCell(column, row);
+	game.initBoard(game.board.playerOneCells, game.board.playerTwoCells);
 })
 
-document.getElementById('play').addEventListener('click', function(e) {
+document.getElementById('start').addEventListener('click', function(e) {
 	game.loop();
+})
+
+document.getElementById('restart').addEventListener('click', function(e) {
+	game.restart();
 })
 
 //Utils
