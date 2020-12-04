@@ -106,13 +106,64 @@ class Board {
 		return this.cells.findIndex(cell => cell.x == x && cell.y == y);
 	}
 
-
 	addCell(cell) {
 		this.cells = this.cells.concat(cell).sort();
 	}
 
 	deleteCell(x, y) {
 		this.cells.splice(this.findCellIndex(x, y), 1);
+	}
+}
+
+class GameEngine {
+	nextBoard(board) {
+		var neighbors = {};
+
+		board.cells.forEach(cell => {
+			let keys = [
+				[(cell.x - 1).mod(columns), (cell.y - 1).mod(rows)],
+				[(cell.x - 1).mod(columns), (cell.y).mod(rows)],
+				[(cell.x - 1).mod(columns), (cell.y + 1).mod(rows)],
+				[(cell.x + 1).mod(columns), (cell.y - 1).mod(rows)],
+				[(cell.x + 1).mod(columns), (cell.y).mod(rows)],
+				[(cell.x + 1).mod(columns), (cell.y + 1).mod(rows)],
+				[(cell.x).mod(columns), (cell.y - 1).mod(rows)],
+				[(cell.x).mod(columns), (cell.y + 1).mod(rows)]
+			]
+
+			keys.forEach(key => {
+				if (neighbors[key]) {
+					neighbors[key] = neighbors[key].concat(cell);
+				} else {
+					neighbors[key] = [cell];
+				}
+			});
+		});
+
+		let newBoard = new Board([]);
+
+		board.cells.forEach(cell => {
+			if (neighbors[[cell.x, cell.y]] && (neighbors[[cell.x, cell.y]].length == 2 || neighbors[[cell.x, cell.y]].length == 3)) {
+				newBoard.addCell(cell);
+			}
+			delete neighbors[[cell.x, cell.y]];
+		});
+
+		Object.entries(neighbors).forEach(([coordinates, cells]) => {
+			if (cells.length == 3) {
+				let x = coordinates.split(',')[0], y = coordinates.split(',')[1];
+				let playerNo;
+
+				if (cells.filter(cell => cell.playerNo == 1).length > 1) {
+					playerNo = 1;
+				} else if (cells.filter(cell => cell.playerNo == 2).length > 2) {
+					playerNo = 2;
+				} 
+				newBoard.addCell(new Cell(parseInt(x), parseInt(y), playerNo));
+			}
+		});
+
+		return newBoard;
 	}
 }
 
@@ -174,53 +225,8 @@ class Game {
 	}
 
 	tick() {
-		var neighbors = {};
-
-		this.board.cells.forEach(cell => {
-			let keys = [
-				[(cell.x - 1).mod(columns), (cell.y - 1).mod(rows)],
-				[(cell.x - 1).mod(columns), (cell.y).mod(rows)],
-				[(cell.x - 1).mod(columns), (cell.y + 1).mod(rows)],
-				[(cell.x + 1).mod(columns), (cell.y - 1).mod(rows)],
-				[(cell.x + 1).mod(columns), (cell.y).mod(rows)],
-				[(cell.x + 1).mod(columns), (cell.y + 1).mod(rows)],
-				[(cell.x).mod(columns), (cell.y - 1).mod(rows)],
-				[(cell.x).mod(columns), (cell.y + 1).mod(rows)]
-			]
-
-			keys.forEach(key => {
-				if (neighbors[key]) {
-					neighbors[key] = neighbors[key].concat(cell);
-				} else {
-					neighbors[key] = [cell];
-				}
-			});
-		});
-
-		let newBoard = new Board([], []);
-
-		this.board.cells.forEach(cell => {
-			if (neighbors[[cell.x, cell.y]] && (neighbors[[cell.x, cell.y]].length == 2 || neighbors[[cell.x, cell.y]].length == 3)) {
-				newBoard.addCell(cell);
-			}
-			delete neighbors[[cell.x, cell.y]];
-		});
-
-		Object.entries(neighbors).forEach(([coordinates, cells]) => {
-			if (cells.length == 3) {
-				let x = coordinates.split(',')[0], y = coordinates.split(',')[1];
-				let playerNo;
-
-				if (cells.filter(cell => cell.playerNo == 1).length > 1) {
-					playerNo = 1;
-				} else if (cells.filter(cell => cell.playerNo == 2).length > 2) {
-					playerNo = 2;
-				} 
-				newBoard.addCell(new Cell(parseInt(x), parseInt(y), playerNo));
-			}
-		});
-		
-		this.board = newBoard;
+		let gameEngine = new GameEngine;
+		this.board = gameEngine.nextBoard(this.board);
 	}
 
 	isOver() {
