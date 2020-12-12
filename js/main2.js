@@ -180,13 +180,22 @@ class GameState {
 	}
 
 	tick() {
+		this.boardHistory = this.boardHistory.concat(JSON.stringify(this.currentBoard))
 		this.currentBoard = this.gameEngine.nextBoard(this.currentBoard)
 
 		this.currentBoard.draw()
 	}
 
-	isOver() {
+	isGameOver() {
+		return this.noPlayerCells() || this.isCycleDetected()
+	}
+
+	noPlayerCells() {
 		return !(this.currentBoard.cells.find(cell => cell.playerNo == 1) && this.currentBoard.cells.find(cell => cell.playerNo == 2))
+	}
+
+	isCycleDetected() {
+		return this.boardHistory.includes(JSON.stringify(this.currentBoard));
 	}
 }
 
@@ -206,7 +215,7 @@ class Game {
 	loop() {
 		let intervalId = setInterval(() => {
 			this.gameState.tick()
-			if (this.gameState.isOver()) { clearInterval(intervalId) }
+			if (this.gameState.isGameOver()) { clearInterval(intervalId) }
 		}, 100)
 	}
 
