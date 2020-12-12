@@ -197,6 +197,15 @@ class GameState {
 	isCycleDetected() {
 		return this.boardHistory.includes(JSON.stringify(this.currentBoard));
 	}
+
+	restart() {
+		this.currentBoard = new Board()
+		this.currentBoard.playerCells = this.initialPlayerCells
+		this.currentBoard.opponentCells = this.initialOpponentCells
+		this.boardHistory = []
+
+		this.currentBoard.draw()
+	}
 }
 
 class Game {
@@ -216,7 +225,7 @@ class Game {
 		let intervalId = setInterval(() => {
 			this.gameState.tick()
 			if (this.gameState.isGameOver()) { clearInterval(intervalId) }
-		}, 100)
+		}, 80)
 	}
 
 	tick() {
@@ -237,17 +246,21 @@ class Game {
 		return cells
 	}
 
+	restart() {
+		this.gameState.restart()
+	}
+
 	setEventListeners() {
 		let that = this
 
 		canvas.addEventListener('click', function(e) {
 			if (that.gameState.name != 'init') { return }
 
-			const rect = canvas.getBoundingClientRect();
-			const x = e.clientX - rect.left, y = e.clientY - rect.top;
+			const rect = canvas.getBoundingClientRect()
+			const x = e.clientX - rect.left, y = e.clientY - rect.top
 
-			const column = Math.floor(x / cellSize);
-			const row = Math.floor(y / cellSize);
+			const column = Math.floor(x / cellSize)
+			const row = Math.floor(y / cellSize)
 
 			if (column >= columns / 2 || row >= rows) { return }
 
@@ -259,7 +272,11 @@ class Game {
 		})
 
 		document.getElementById('start').addEventListener('click', function(e) {
-			that.loop();
+			that.loop()
+		})
+
+		document.getElementById('restart').addEventListener('click', function(e) {
+			that.restart()
 		})
 	}
 }
