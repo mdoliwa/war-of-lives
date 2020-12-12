@@ -264,8 +264,6 @@ class Game {
 	}
 }
 
-Math.seedrandom('war-of-lives')
-
 const canvas = document.getElementById('canvas')
 const ctx = canvas.getContext('2d')
 
