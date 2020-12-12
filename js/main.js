@@ -1,105 +1,84 @@
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-
-const cellSize = 32;
-const rows = 16;
-const columns = rows * 2;
-
-const playerOneCells = [[2,2], [3,3], [4,2], [4,4], [6,7], [5,6], [5,5]];
-const playerTwoCells = [[2,2], [2,3], [2,4]];
-
 class Cell {
 	constructor(x, y, playerNo) {
-		this.x = x;
-		this.y = y;
-		this.playerNo = playerNo;
+		this.x = x
+		this.y = y
+		this.playerNo = playerNo
 	}
 
 	get color() {
-		let result;
+		let result
 
 		if (this.playerNo == 1) {
-			result = 'red';
+			result = '#DC2626'
 		} else if (this.playerNo == 2) {
-			result = 'blue';
+			result = '#2563EB'
 		} else {
-			result = 'lightgray';
+			result = 'lightgray'
 		}
 		
-		return result;
+		return result
 	}
 }
 
 class Board {
 	constructor(cells) {
-		this.cells = cells;
+		this.cells = cells || []
 	}
 
 	draw() {
-		this.drawGrid();
-		this.drawCells();
+		this.drawBackground()
+		this.drawGrid()
+		this.drawCells()
 	}
 
-	get playerOneCells() {
-		return this.cells.filter(cell => cell.playerNo == 1).map(cell => [cell.x, cell.y]);
-	}
+	 set playerCells(cells) {
+		 this.cells = this.cells.filter(cell => cell.playerNo != 1)
+		 cells.forEach(cell => this.cells = this.cells.concat(new Cell(cell[0], cell[1], 1)))
 
-	get playerTwoCells() {
-		return this.cells.filter(cell => cell.playerNo == 2).map(cell => [cell.x - rows, cell.y]) ;
-	}
-
-	 set playerOneCells(cells) {
-		 this.cells = this.cells.filter(cell => cell.playerNo != 1);
-		 cells.forEach(cell => this.cells = this.cells.concat(new Cell(cell[0], cell[1], 1)));
-
-		 this.cells = this.cells.sort();
+		 this.cells = this.cells.sort()
 	 }
 
-	set playerTwoCells(cells) {
-		 this.cells = this.cells.filter(cell => cell.playerNo != 2);
-		 cells.forEach(cell => this.cells = this.cells.concat(new Cell(cell[0] + rows, cell[1], 2)));
+	set opponentCells(cells) {
+		 this.cells = this.cells.filter(cell => cell.playerNo != 2)
+		 cells.forEach(cell => this.cells = this.cells.concat(new Cell(cell[0] + rows, cell[1], 2)))
 
-		 this.cells = this.cells.sort();
+		 this.cells = this.cells.sort()
+	}
+
+	drawBackground() {
+		ctx.clearRect(0, 0, columns * cellSize + 1, rows * cellSize + 1)
+		ctx.fillStyle = '#FEF2F2'
+
+		ctx.fillRect(0, 0, columns * cellSize / 2, rows * cellSize)
+		ctx.fillStyle = '#EFF6FF'
+
+		ctx.fillRect(columns * cellSize / 2, 0, columns * cellSize / 2, rows * cellSize)
+		ctx.strokeStyle = '#aaa'
 	}
 
 	drawGrid() {
-		ctx.clearRect(0, 0, columns * cellSize + 1, rows * cellSize + 1);
-		ctx.strokeStyle = '#aaa';
-
 		for (let x = 0.5; x <= columns * cellSize + 0.5; x += cellSize) {
-			ctx.beginPath();
-			ctx.moveTo(x, 0);
-			ctx.lineTo(x, rows * cellSize + 1);
-			ctx.stroke();
+			ctx.beginPath()
+			ctx.moveTo(x, 0)
+			ctx.lineTo(x, rows * cellSize + 1)
+			ctx.stroke()
 		}
 
 		for (let y = 0.5; y <= rows * cellSize+ 0.5; y += cellSize) {
-			ctx.beginPath();
-			ctx.moveTo(0, y);
-			ctx.lineTo(columns * cellSize + 1, y);
-			ctx.stroke();
+			ctx.beginPath()
+			ctx.moveTo(0, y)
+			ctx.lineTo(columns * cellSize + 1, y)
+			ctx.stroke()
 		}
 	}
 
 	drawCells() { this.cells.forEach((cell) => { this.drawCell(cell) }); }
 
 	drawCell(cell) {
-		ctx.beginPath();
-		ctx.rect(cell.x * cellSize + 1, cell.y * cellSize + 1, cellSize - 1, cellSize - 1);
-		ctx.fillStyle = cell.color;
-		ctx.fill();
-	}
-
-	toggleCell(x, y) {
-		var cellIndex = this.findCellIndex(x, y);
-
-		if (cellIndex > -1) {
-			this.deleteCell(x, y);
-		} else {
-			this.addCell(new Cell(x, y, 1));
-		}
-
-		this.draw();
+		ctx.beginPath()
+		ctx.rect(cell.x * cellSize + 1, cell.y * cellSize + 1, cellSize - 1, cellSize - 1)
+		ctx.fillStyle = cell.color
+		ctx.fill()
 	}
 
 	findCellIndex(x, y) {
@@ -167,146 +146,154 @@ class GameEngine {
 	}
 }
 
-class Game {
-	constructor(playerOneCells, playerTwoCells) {
-		this.initBoard(playerOneCells, playerTwoCells);
-		this.history = [JSON.stringify(this.board)]
-		this.state = 'initialized';
-		this.observers = [];
+class GameState {
+	name = 'init'
+	level = 1
+	boardHistory = []
+	currentBoard = new Board()
+	gameEngine = new GameEngine()
+
+	get initialPlayerCells() {
+		return this._initialPlayerCells || []
 	}
 
-	initBoard(playerOneCells, playerTwoCells) {
-		this.playerOneCells = playerOneCells;
-		this.playerTwoCells = playerTwoCells;
+	set initialPlayerCells(cells) {
+		let filteredCells = cells.filter(cell => cell[0] < columns / 2 && cell[1] < rows)
 
-		this.board = new Board([]);
-		this.board.playerOneCells = playerOneCells;
-		this.board.playerTwoCells = playerTwoCells;
+		this._initialPlayerCells = filteredCells 
+		this.currentBoard.playerCells = filteredCells
+
+		this.currentBoard.draw()
 	}
 
-	init() {
-		this.board.draw();
-		this.notify();
+	get initialOpponentCells() {
+		return this._initialOpponentCells || []
 	}
 
-	subscribe(observer) {
-		this.observers.push(observer);
-	}
-	
-	updateState(newState) {
-		this.state = newState;
-		this.notify();
-	}
+	set initialOpponentCells(cells) {
+		let filteredCells = cells.filter(cell => cell[0] < columns / 2 && cell[1] < rows)
 
-	notify() {
-		this.observers.forEach(observer => observer.update(this.state));
-	}
+		this._initialOpponentCells = filteredCells 
+		this.currentBoard.opponentCells = filteredCells
 
-	loop() {
-		var that = this;
-		this.updateState('in progress');
-
-		var intervalId = setInterval(function(){
-			that.tick();
-			that.board.draw();
-			if (that.isOver() || that.cycleDetected()) {
-				that.updateState('game over');
-				clearInterval(intervalId);
-			}
-			that.history = that.history.concat(JSON.stringify(that.board));
-		}, 100);
-	}
-
-	restart() {
-		this.initBoard(this.playerOneCells, this.playerTwoCells);
-		this.history = [JSON.stringify(this.board)];
-		this.updateState('initialized');
-		this.init();
+		this.currentBoard.draw()
 	}
 
 	tick() {
-		let gameEngine = new GameEngine;
-		this.board = gameEngine.nextBoard(this.board);
+		this.boardHistory = this.boardHistory.concat(JSON.stringify(this.currentBoard))
+		this.currentBoard = this.gameEngine.nextBoard(this.currentBoard)
+
+		this.currentBoard.draw()
 	}
 
-	isOver() {
-		return !(this.board.cells.find(cell => cell.playerNo == 1) && this.board.cells.find(cell => cell.playerNo == 2))
+	isGameOver() {
+		return this.noPlayerCells() || this.isCycleDetected()
 	}
 
-	cycleDetected() {
-		return this.history.includes(JSON.stringify(this.board));
+	noPlayerCells() {
+		return !(this.currentBoard.cells.find(cell => cell.playerNo == 1) && this.currentBoard.cells.find(cell => cell.playerNo == 2))
 	}
 
-	winner() {
-		let playerOneHasCells = this.board.cells.find(cell => cell.playerNo == 1);
-		let playerTwoHasCells = this.board.cells.find(cell => cell.playerNo == 2);
+	isCycleDetected() {
+		return this.boardHistory.includes(JSON.stringify(this.currentBoard));
+	}
 
-		if (playerOneHasCells && playerTwoHasCells) {
-			return 'draw';
-		} else if (playerOneHasCells) {
-			return 'player one';
-		} else if (playerTwoHasCells) {
-			return 'player two';
-		} 	
+	restart() {
+		this.currentBoard = new Board()
+		this.currentBoard.playerCells = this.initialPlayerCells
+		this.currentBoard.opponentCells = this.initialOpponentCells
+		this.boardHistory = []
+
+		this.currentBoard.draw()
 	}
 }
 
-class Menu {
+class Game {
+	gameState = new GameState()
+
 	constructor() {
-		this.playButton = document.getElementById('start');
-		this.restartButton = document.getElementById('restart');
+		canvas.width = cellSize * columns + 1
+		canvas.height = cellSize * rows + 1
 	}
 
-	update(gameState) {
-		switch(gameState) {
-			case 'initialized': 
-				this.playButton.style.display = 'inline-block';
-				this.playButton.disabled = false;
-				this.restartButton.style.display = 'none';
-				break;
-			case 'in progress':
-				this.playButton.disabled = true;
-				break;
-			case 'game over':
-				this.playButton.style.display = 'none';
-				this.restartButton.style.display = 'inline-block';
-				break;
+	init() {
+		this.gameState.initialOpponentCells = this.loadOpponentCells(this.gameState.level)
+		this.setEventListeners()
+	}
+
+	loop() {
+		let intervalId = setInterval(() => {
+			this.gameState.tick()
+			if (this.gameState.isGameOver()) { clearInterval(intervalId) }
+		}, 80)
+	}
+
+	tick() {
+		this.gameState.tick()
+	}
+
+	loadOpponentCells(level) {
+		let cells = []
+
+		for (let x = 0; x < columns / 2; x++) {
+			for (let y = 0; y < rows; y++ ) {
+				if (Math.random() > 0.7) {
+					cells = cells.concat([[x, y]])
+				}
+			}
 		}
+
+		return cells
+	}
+
+	restart() {
+		this.gameState.restart()
+	}
+
+	setEventListeners() {
+		let that = this
+
+		canvas.addEventListener('click', function(e) {
+			if (that.gameState.name != 'init') { return }
+
+			const rect = canvas.getBoundingClientRect()
+			const x = e.clientX - rect.left, y = e.clientY - rect.top
+
+			const column = Math.floor(x / cellSize)
+			const row = Math.floor(y / cellSize)
+
+			if (column >= columns / 2 || row >= rows) { return }
+
+			if (that.gameState.initialPlayerCells.find(cell => cell[0] == column && cell[1] == row)) {
+				that.gameState.initialPlayerCells = that.gameState.initialPlayerCells.filter(cell => !(cell[0] == column && cell[1] == row))
+			} else {
+				that.gameState.initialPlayerCells = that.gameState.initialPlayerCells.concat([[column, row]])
+			}
+		})
+
+		document.getElementById('start').addEventListener('click', function(e) {
+			that.loop()
+		})
+
+		document.getElementById('restart').addEventListener('click', function(e) {
+			that.restart()
+		})
 	}
 }
 
-canvas.width = cellSize * columns + 1;
-canvas.height = cellSize * rows + 1; 
+const canvas = document.getElementById('canvas')
+const ctx = canvas.getContext('2d')
 
-var game = new Game(playerOneCells, playerTwoCells)
+const cellSize = 32 
+const	rows = 16 
+const	columns = rows * 2
 
-game.subscribe(new Menu());
-
-game.init();
-
-//Event listeners
-
-canvas.addEventListener('click', function(e) {
-	const rect = canvas.getBoundingClientRect();
-	const x = e.clientX - rect.left, y = e.clientY - rect.top;
-
-	const column = Math.floor(x / cellSize);
-	const row = Math.floor(y / cellSize);
-
-	game.board.toggleCell(column, row);
-	game.initBoard(game.board.playerOneCells, game.board.playerTwoCells);
-})
-
-document.getElementById('start').addEventListener('click', function(e) {
-	game.loop();
-})
-
-document.getElementById('restart').addEventListener('click', function(e) {
-	game.restart();
-})
+game = new Game()
+game.init()
 
 //Utils
 
 Number.prototype.mod = function(n) {
 	return ((this % n) + n) % n;
 }
+
