@@ -199,6 +199,10 @@ class Game {
 		this.setEventListeners()
 	}
 
+	loop() {
+		setInterval(() => this.gameState.tick(), 100)
+	}
+
 	tick() {
 		this.gameState.tick()
 	}
@@ -236,6 +240,10 @@ class Game {
 			} else {
 				that.gameState.initialPlayerCells = that.gameState.initialPlayerCells.concat([[column, row]])
 			}
+		})
+
+		document.getElementById('start').addEventListener('click', function(e) {
+			that.loop();
 		})
 	}
 }
