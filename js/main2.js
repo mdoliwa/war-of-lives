@@ -80,6 +80,70 @@ class Board {
 		ctx.fillStyle = cell.color
 		ctx.fill()
 	}
+
+	findCellIndex(x, y) {
+		return this.cells.findIndex(cell => cell.x == x && cell.y == y);
+	}
+
+	addCell(cell) {
+		this.cells = this.cells.concat(cell).sort();
+	}
+
+	deleteCell(x, y) {
+		this.cells.splice(this.findCellIndex(x, y), 1);
+	}
+}
+
+class GameEngine {
+	nextBoard(board) {
+		var neighbors = {};
+
+		board.cells.forEach(cell => {
+			let keys = [
+				[(cell.x - 1).mod(columns), (cell.y - 1).mod(rows)],
+				[(cell.x - 1).mod(columns), (cell.y).mod(rows)],
+				[(cell.x - 1).mod(columns), (cell.y + 1).mod(rows)],
+				[(cell.x + 1).mod(columns), (cell.y - 1).mod(rows)],
+				[(cell.x + 1).mod(columns), (cell.y).mod(rows)],
+				[(cell.x + 1).mod(columns), (cell.y + 1).mod(rows)],
+				[(cell.x).mod(columns), (cell.y - 1).mod(rows)],
+				[(cell.x).mod(columns), (cell.y + 1).mod(rows)]
+			]
+
+			keys.forEach(key => {
+				if (neighbors[key]) {
+					neighbors[key] = neighbors[key].concat(cell);
+				} else {
+					neighbors[key] = [cell];
+				}
+			});
+		});
+
+		let newBoard = new Board([]);
+
+		board.cells.forEach(cell => {
+			if (neighbors[[cell.x, cell.y]] && (neighbors[[cell.x, cell.y]].length == 2 || neighbors[[cell.x, cell.y]].length == 3)) {
+				newBoard.addCell(cell);
+			}
+			delete neighbors[[cell.x, cell.y]];
+		});
+
+		Object.entries(neighbors).forEach(([coordinates, cells]) => {
+			if (cells.length == 3) {
+				let x = coordinates.split(',')[0], y = coordinates.split(',')[1];
+				let playerNo;
+
+				if (cells.filter(cell => cell.playerNo == 1).length > 1) {
+					playerNo = 1;
+				} else if (cells.filter(cell => cell.playerNo == 2).length > 2) {
+					playerNo = 2;
+				} 
+				newBoard.addCell(new Cell(parseInt(x), parseInt(y), playerNo));
+			}
+		});
+
+		return newBoard;
+	}
 }
 
 class GameState {
@@ -87,14 +151,17 @@ class GameState {
 	level = 1
 	boardHistory = []
 	currentBoard = new Board()
+	gameEngine = new GameEngine()
 
 	get initialPlayerCells() {
 		return this._initialPlayerCells || []
 	}
 
 	set initialPlayerCells(cells) {
-		this._initialPlayerCells = cells
-		this.currentBoard.playerCells = cells
+		let filteredCells = cells.filter(cell => cell[0] < columns / 2 && cell[1] < rows)
+
+		this._initialPlayerCells = filteredCells 
+		this.currentBoard.playerCells = filteredCells
 
 		this.currentBoard.draw()
 	}
@@ -104,8 +171,16 @@ class GameState {
 	}
 
 	set initialOpponentCells(cells) {
-		this._initialOpponentCells = cells
-		this.currentBoard.opponentCells = cells
+		let filteredCells = cells.filter(cell => cell[0] < columns / 2 && cell[1] < rows)
+
+		this._initialOpponentCells = filteredCells 
+		this.currentBoard.opponentCells = filteredCells
+
+		this.currentBoard.draw()
+	}
+
+	tick() {
+		this.currentBoard = this.gameEngine.nextBoard(this.currentBoard)
 
 		this.currentBoard.draw()
 	}
@@ -124,10 +199,14 @@ class Game {
 		this.setEventListeners()
 	}
 
+	tick() {
+		this.gameState.tick()
+	}
+
 	loadOpponentCells(level) {
 		let cells = []
 
-		for (let x = 0; x < columns; x++) {
+		for (let x = 0; x < columns / 2; x++) {
 			for (let y = 0; y < rows; y++ ) {
 				if (Math.random() > 0.7) {
 					cells = cells.concat([[x, y]])
@@ -161,6 +240,8 @@ class Game {
 	}
 }
 
+Math.seedrandom('war-of-lives')
+
 const canvas = document.getElementById('canvas')
 const ctx = canvas.getContext('2d')
 
@@ -170,3 +251,10 @@ const	columns = rows * 2
 
 game = new Game()
 game.init()
+
+//Utils
+
+Number.prototype.mod = function(n) {
+	return ((this % n) + n) % n;
+}
+
