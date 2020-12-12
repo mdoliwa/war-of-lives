@@ -184,6 +184,10 @@ class GameState {
 
 		this.currentBoard.draw()
 	}
+
+	isOver() {
+		return !(this.currentBoard.cells.find(cell => cell.playerNo == 1) && this.currentBoard.cells.find(cell => cell.playerNo == 2))
+	}
 }
 
 class Game {
@@ -200,7 +204,10 @@ class Game {
 	}
 
 	loop() {
-		setInterval(() => this.gameState.tick(), 100)
+		let intervalId = setInterval(() => {
+			this.gameState.tick()
+			if (this.gameState.isOver()) { clearInterval(intervalId) }
+		}, 100)
 	}
 
 	tick() {
