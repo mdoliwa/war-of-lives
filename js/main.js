@@ -232,6 +232,12 @@ class Game {
 		this.gameState.tick()
 	}
 
+	newLevel() {
+		this.gameState.restart()
+		this.gameState.level += 1
+		this.gameState.initialOpponentCells = this.loadOpponentCells(this.gameState.level)
+	}
+
 	loadOpponentCells(level) {
 		let cells = []
 
@@ -244,10 +250,6 @@ class Game {
 		}
 
 		return cells
-	}
-
-	restart() {
-		this.gameState.restart()
 	}
 
 	setEventListeners() {
@@ -276,7 +278,11 @@ class Game {
 		})
 
 		document.getElementById('restart').addEventListener('click', function(e) {
-			that.restart()
+			that.gameState.restart()
+		})
+
+		document.getElementById('next').addEventListener('click', function(e) {
+			that.newLevel()
 		})
 	}
 }
