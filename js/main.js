@@ -284,6 +284,10 @@ class Game {
 		document.getElementById('next').addEventListener('click', function(e) {
 			that.newLevel()
 		})
+
+		document.getElementById('clear').addEventListener('click', function(e) {
+			that.gameState.initialPlayerCells = []
+		})
 	}
 }
 
