@@ -227,6 +227,9 @@ class GameState {
 	}
 
 	restart() {
+		if (this.name == 'init') { return }
+
+		this.name = 'init'
 		this.currentBoard = new Board()
 		this.currentBoard.playerCells = this.initialPlayerCells
 		this.currentBoard.opponentCells = this.initialOpponentCells
@@ -250,12 +253,14 @@ class Game {
 	}
 
 	loop() {
+		if (this.gameState.name != 'init') { return }
+
 		let intervalId = setInterval(() => {
 			this.gameState.tick()
+
 			if (this.gameState.isGameOver()) { 
 				clearInterval(intervalId)
 				this.gameState.name = this.gameState.winner()
-				console.log(this.gameState.name)
 			}
 		}, 80)
 	}
@@ -265,9 +270,12 @@ class Game {
 	}
 
 	newLevel() {
+		if (this.gameState.name != 'player') { console.log("YOU HAVE TO WIN WITH THIS ONE FIRST"); return }
+
 		this.gameState.restart()
 		this.gameState.level += 1
 		this.gameState.initialOpponentCells = this.loadOpponentCells(this.gameState.level)
+		document.getElementById('level').innerText = `Level ${this.gameState.level}`
 	}
 
 	loadOpponentCells(level) {
