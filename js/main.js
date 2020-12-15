@@ -31,12 +31,20 @@ class Board {
 		this.drawCells()
 	}
 
-	 set playerCells(cells) {
-		 this.cells = this.cells.filter(cell => cell.playerNo != 1)
-		 cells.forEach(cell => this.cells = this.cells.concat(new Cell(cell[0], cell[1], 1)))
+	get playerCells() {
+		return this.cells.filter(cell => cell.playerNo == 1)
+	}
 
-		 this.cells = this.cells.sort()
-	 }
+	get opponentCells() {
+		return this.cells.filter(cell => cell.playerNo == 2)
+	}
+
+	set playerCells(cells) {
+		this.cells = this.cells.filter(cell => cell.playerNo != 1)
+		cells.forEach(cell => this.cells = this.cells.concat(new Cell(cell[0], cell[1], 1)))
+
+		this.cells = this.cells.sort()
+	}
 
 	set opponentCells(cells) {
 		 this.cells = this.cells.filter(cell => cell.playerNo != 2)
@@ -147,6 +155,13 @@ class GameEngine {
 }
 
 class GameState {
+	// States descriptions
+	
+	// init - beginning of level
+	// player - game over and player won
+	// opponent - game over and opponent lost
+	// draw - game over with a draw
+
 	name = 'init'
 	level = 1
 	boardHistory = []
@@ -198,6 +213,19 @@ class GameState {
 		return this.boardHistory.includes(JSON.stringify(this.currentBoard));
 	}
 
+	winner() {
+		let playerCellsCount = this.currentBoard.playerCells.length
+		let opponentCellsCount = this.currentBoard.opponentCells.length
+
+		if ((playerCellsCount > 0 && opponentCellsCount > 0) || (playerCellsCount == 0 && opponentCellsCount == 0)) {
+			return 'draw'
+		} else if (playerCellsCount > 0) {
+			return 'player'
+		} else {
+			return 'opponent'
+		}
+	}
+
 	restart() {
 		this.currentBoard = new Board()
 		this.currentBoard.playerCells = this.initialPlayerCells
@@ -224,7 +252,11 @@ class Game {
 	loop() {
 		let intervalId = setInterval(() => {
 			this.gameState.tick()
-			if (this.gameState.isGameOver()) { clearInterval(intervalId) }
+			if (this.gameState.isGameOver()) { 
+				clearInterval(intervalId)
+				this.gameState.name = this.gameState.winner()
+				console.log(this.gameState.name)
+			}
 		}, 80)
 	}
 
