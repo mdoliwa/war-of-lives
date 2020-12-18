@@ -331,6 +331,71 @@ class Game {
 	}
 }
 
+class StateMachine {
+	currentState = 'init'
+
+	events = [
+		{
+			name: 'start',
+			transitions: [
+				{
+					from: 'init',
+					to: 'inProgress'
+				}
+			]
+		},
+		{
+			name: 'playerWins',
+			transitions: [
+				{
+					from: 'inProgress',
+					to: 'playerWon'
+				}
+			]
+		},
+		{
+			name: 'opponentWins',
+			transitions: [
+				{ 
+					from: 'inProgress',
+					to: 'opponentWon'
+				}
+			]
+		},
+		{
+			name: 'restart',
+			transitions: [
+				{
+					from: 'playerWon',
+					to: 'init'
+				},
+				{
+					from: 'opponentWon',
+					to: 'init'
+				}
+			]
+		},
+		{
+			name: 'newLevel',
+			transitions: [
+				{
+					from: 'playerWon',
+					to: 'init'
+				}
+			]
+		}
+	]
+
+	nextState(eventName) {
+		let event = this.events.find(event => event.name == eventName)
+		let transition = event.transitions.find(transition => transition.from == this.currentState)
+
+		if (transition) { this.currentState = transition.to }
+
+		return this.currentState
+	}
+}
+
 const canvas = document.getElementById('canvas')
 const ctx = canvas.getContext('2d')
 
